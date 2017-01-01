@@ -122,8 +122,6 @@ echo     # Can't use out-file because it writes a UTF BOM which we don't want
 echo     [IO.File]::WriteAllLines^($tempFile, $outLines^)
 echo     move-item -force $tempFile $hostsFile
 echo.
-echo     #get-content $hostsFile
-echo     #write-host ""
 echo     write-host "Completed successfully!" -foregroundcolor "green"
 echo } catch {
 echo     $host.ui.WriteErrorLine^($_.Exception.Message^)
