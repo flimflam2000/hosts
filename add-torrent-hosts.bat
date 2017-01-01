@@ -33,6 +33,7 @@
 :: literals).
 
 @echo off
+SETLOCAL
 set PSFILE=%USERPROFILE%\__temp.ps1
 
 (
@@ -48,13 +49,12 @@ echo     write-error "Usage: add-torrent-hosts.bat [undo]"
 echo     exit 1
 echo }
 echo.
-echo if ^(-not ^(^([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent^(^)^).IsInRole^([Security.Principal.WindowsBuiltInRole]"Administrator"^)^)^) {
-echo     $host.ui.WriteErrorLine^("This script requires administrator privileges"^)
-echo     $host.ui.WriteErrorLine^("Right click on the file and select 'Run as administrator'"^)
-echo     exit 1
-echo }
-echo.
 echo try {
+echo     if ^(-not ^(^([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent^(^)^).IsInRole^([Security.Principal.WindowsBuiltInRole]"Administrator"^)^)^) {
+echo         throw "This script requires administrator privileges`nRight click on the file and select 'Run as administrator'"
+echo     }
+echo.
+echo     $exitCode = 0
 echo     $hostsFile = "C:\Windows\System32\drivers\etc\hosts"
 echo     $backupFile = "$hostsFile-backup"
 echo     $tempFile = "$hostsFile-temp"
@@ -130,10 +130,14 @@ echo     move-item -force $tempFile $hostsFile
 echo.
 echo     write-host "Completed successfully!" -foregroundcolor "green"
 echo } catch {
+echo     $exitCode = 1
 echo     $host.ui.WriteErrorLine^($_.Exception.Message^)
 echo }
 echo read-host "Press enter to exit" ^| out-null
+echo exit $exitCode
 )> %PSFILE%
 
 powershell -ExecutionPolicy Bypass -File %PSFILE% %*
+set EXITCODE=%ERRORLEVEL%
 del %PSFILE%
+EXIT /B %EXITCODE%
