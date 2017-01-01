@@ -11,13 +11,11 @@
 :: about how this works, google "hosts file" and "DNS". You will probably have
 :: to restart your web browser after running this script for it to take effect.
 ::
-:: If the IP address for any of these hosts ever changes, this fix will stop
-:: working and you'll probably get some confusing error message when you try to
-:: visit the site whose address changed. You can fix it by updating the IP
-:: addresses in this script and then re-running it. You can always get the
-:: current IP address for a host by going to <hostname>.ipaddress.com, where
-:: <hostname> is the name of the host you want. E.g. to find the IP address of
-:: thepiratebay.org, go to thepiratebay.org.ipaddress.com.
+:: IP addresses are pulled from ipaddress.com in a hacky fashion. The script
+:: can safely be run multiple times to keep addresses up-to-date - it cleans
+:: out previous modifications to the hosts file on every run. Can also be run
+:: with an argument "undo" to only clean out previous modifications and not add
+:: any new entries.
 ::
 :: Because the hosts file is a protected system file and we want to modify it,
 :: this script must be run as administrator. This means right-click on the
@@ -26,14 +24,13 @@
 :: your computer, click yes. P.s. generally don't do this for anything you
 :: download off the innernets unless you trust the person you got it from.
 ::
-:: If the script is run with "undo", it removes the torrent hosts and doesn't
-:: add any new ones.
-::
 :: We have this PowerShell-batch-file abomination to get around the default
 :: PowerShell execution policy which prohibits running scripts. We echo the
 :: PowerShell code into a temporary file and run it with
-:: -ExecutionPolicy Bypass. If you're going to modify the PowerShell code
-:: remember to escape special batch file characters: ()<>| and possibly others.
+:: -ExecutionPolicy Bypass. If you're going to modify the PowerShell code,
+:: remember to escape special batch file characters: ()<>| and possibly others
+:: (but it seems like special characters don't have to be escaped in string
+:: literals).
 
 @echo off
 set PSFILE=%USERPROFILE%\__temp.ps1
@@ -55,6 +52,15 @@ echo try {
 echo     $hostsFile = "C:\Windows\System32\drivers\etc\hosts"
 echo     $backupFile = "$hostsFile-backup"
 echo     $tempFile = "$hostsFile-temp"
+echo     $htmlFile = $env:USERPROFILE + "\__temp.html"
+echo.
+echo     $hostNames = @^(
+echo         "thepiratebay.org",
+echo         "torrentz.eu",
+echo         "torrenthound.com",
+echo         "isohunt.to",
+echo         "solarmovie.to"
+echo     ^)
 echo.
 echo     # Pick a name for the backup file that doesn't already exist.
 echo     $backupSuffix = 1
@@ -81,14 +87,32 @@ echo         }
 echo     }
 echo.
 echo     if ^(-not $undo^) {
-echo         # This is the guts of the script - if you want to add more hosts or
-echo         # update an IP address, this is where you do it.
+echo         $client = new-object System.Net.WebClient
 echo         $outLines += "# BEGIN TORRENT HOSTS ##########################################################"
-echo         $outLines += "104.31.19.30    thepiratebay.org"
-echo         $outLines += "85.195.102.27   torrentz.eu"
-echo         $outLines += "104.31.18.30    torrenthound.com"
-echo         $outLines += "104.23.200.30   isohunt.to"
-echo         $outLines += "72.52.4.119     solarmovie.to"
+echo         foreach ^($hostName in $hostNames^) {
+echo             if ^(test-path $htmlFile^) {
+echo                 remove-item $htmlFile
+echo             }
+echo             $client.DownloadFile^("http://$hostName.ipaddress.com/", $htmlFile^)
+echo             $htmlLines = get-content $htmlFile
+echo             $address = ""
+echo             # Regex the IP address out of the html. If ipaddress.com ever
+echo             # changes these pages this regex will have to be updated.
+echo             # Also, special characters in strings apparently don't need to
+echo             # be escaped.
+echo             foreach ^($htmlLine in $htmlLines^) {
+echo                 if ^($htmlLine -match "^<tr><th>IP Address:</th><td>([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)</td></tr>$"^) {
+echo                     $address = $Matches[1]
+echo                     break
+echo                 }
+echo             }
+echo             if ^($address -eq ""^) {
+echo                 $host.ui.WriteErrorLine^("Failed to find IP address for $hostName"^)
+echo             } else {
+echo                 write-output "$hostName : $address"
+echo                 $outLines += "$address $hostName"
+echo             }
+echo         }
 echo         $outLines += "# END TORRENT HOSTS ############################################################"
 echo     }
 echo.
