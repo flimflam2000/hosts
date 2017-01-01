@@ -48,6 +48,12 @@ echo     write-error "Usage: add-torrent-hosts.bat [undo]"
 echo     exit 1
 echo }
 echo.
+echo if ^(-not ^(^([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent^(^)^).IsInRole^([Security.Principal.WindowsBuiltInRole]"Administrator"^)^)^) {
+echo     $host.ui.WriteErrorLine^("This script requires administrator privileges"^)
+echo     $host.ui.WriteErrorLine^("Right click on the file and select 'Run as administrator'"^)
+echo     exit 1
+echo }
+echo.
 echo try {
 echo     $hostsFile = "C:\Windows\System32\drivers\etc\hosts"
 echo     $backupFile = "$hostsFile-backup"
