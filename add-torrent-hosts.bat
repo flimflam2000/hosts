@@ -93,9 +93,9 @@ echo         }
 echo     }
 echo.
 echo     if ^(-not $undo^) {
-echo         $ips = @{}
 echo         $client = new-object System.Net.WebClient
-echo         foreach ^($hostName in $hosts.keys^) {
+echo         $hostNames = $hosts.keys ^| foreach { $_ }
+echo         foreach ^($hostName in $hostNames^) {
 echo             if ^(test-path $htmlFile^) {
 echo                 remove-item $htmlFile
 echo             }
@@ -116,7 +116,7 @@ echo             if ^($address -eq ""^) {
 echo                 $host.ui.WriteErrorLine^("Failed to find IP address for $hostName, using fallback"^)
 echo             } else {
 echo                 write-output "$hostName : $address"
-echo                 $ips.set_item^($hostname, $address^)
+echo                 $hosts.set_item^($hostname, $address^)
 echo             }
 echo         }
 echo         $outLines += "# BEGIN TORRENT HOSTS ##########################################################"
