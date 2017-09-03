@@ -60,13 +60,13 @@ echo     $backupFile = "$hostsFile-backup"
 echo     $tempFile = "$hostsFile-temp"
 echo     $htmlFile = $env:USERPROFILE + "\__temp.html"
 echo.
-echo     $hostNames = @^(
-echo         "thepiratebay.org",
-echo         "torrentz.eu",
-echo         "torrenthound.com",
-echo         "isohunt.to",
-echo         "solarmovie.to"
-echo     ^)
+echo     $hosts = @{
+echo         "thepiratebay.org" = "104.31.18.30";
+echo         "torrentz.eu"      = "77.79.224.236";
+echo         "torrenthound.com" = "104.31.17.3";
+echo         "isohunt.to"       = "104.23.197.8";
+echo         "solarmovie.to"    = "72.52.4.119";
+echo     }
 echo.
 echo     # Pick a name for the backup file that doesn't already exist.
 echo     $backupSuffix = 1
@@ -93,9 +93,9 @@ echo         }
 echo     }
 echo.
 echo     if ^(-not $undo^) {
+echo         $ips = @{}
 echo         $client = new-object System.Net.WebClient
-echo         $outLines += "# BEGIN TORRENT HOSTS ##########################################################"
-echo         foreach ^($hostName in $hostNames^) {
+echo         foreach ^($hostName in $hosts.keys^) {
 echo             if ^(test-path $htmlFile^) {
 echo                 remove-item $htmlFile
 echo             }
@@ -113,10 +113,16 @@ echo                     break
 echo                 }
 echo             }
 echo             if ^($address -eq ""^) {
-echo                 $host.ui.WriteErrorLine^("Failed to find IP address for $hostName"^)
+echo                 $host.ui.WriteErrorLine^("Failed to find IP address for $hostName, using fallback"^)
 echo             } else {
 echo                 write-output "$hostName : $address"
-echo                 $outLines += "$address $hostName"
+echo                 $ips.set_item^($hostname, $address^)
+echo             }
+echo         }
+echo         $outLines += "# BEGIN TORRENT HOSTS ##########################################################"
+echo         foreach ^($entry in $hosts.GetEnumerator^(^) ^| sort-object name^) {
+echo             if ^($entry.value -ne ""^) {
+echo                 $outLines += $entry.value + " " + $entry.name
 echo             }
 echo         }
 echo         $outLines += "# END TORRENT HOSTS ############################################################"
