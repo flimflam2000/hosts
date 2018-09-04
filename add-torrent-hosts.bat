@@ -61,11 +61,12 @@ echo     $tempFile = "$hostsFile-temp"
 echo     $htmlFile = $env:USERPROFILE + "\__temp.html"
 echo.
 echo     $hosts = @{
-echo         "thepiratebay.org" = "104.31.18.30";
-echo         "torrentz.eu"      = "77.79.224.236";
-echo         "torrenthound.com" = "104.31.17.3";
-echo         "isohunt.to"       = "104.23.197.8";
-echo         "solarmovie.to"    = "72.52.4.119";
+echo         "thepiratebay.org"     = "104.31.18.30";
+echo         "www.thepiratebay.org" = "104.31.18.30";
+echo         "torrentz.eu"          = "77.79.224.236";
+echo         "torrenthound.com"     = "104.31.17.3";
+echo         "isohunt.to"           = "104.23.197.8";
+echo         "solarmovie.to"        = "72.52.4.119";
 echo     }
 echo.
 echo     # Pick a name for the backup file that doesn't already exist.
